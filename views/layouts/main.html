@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .title }} - Go HTMX App</title>
+    <!-- Basic styling - can be expanded -->
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; color: #333; }
+        .container { background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+        h1, h2 { color: #333; }
+        label { display: block; margin-bottom: 5px; }
+        input[type='text'], input[type='email'], input[type='password'] { width: calc(100% - 22px); padding: 10px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background-color: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .error { color: red; margin-bottom: 10px; }
+        .htmx-indicator { display: none; } /* Basic HTMX loading indicator */
+        .htmx-request .htmx-indicator { display: inline; }
+        .htmx-settling .htmx-indicator { display: none; }
+        #response-message { margin-top: 15px; padding: 10px; border-radius: 4px; }
+        .success-message { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error-message { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+    <script src="https://unpkg.com/htmx.org@1.9.10" integrity="sha384-D1Kt99CQMDuVetoL1lrYwg5t+9QdHe7NLX/SoJYkXDFfX37iInKRy5xLSi8RMhJ9" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        {{embed}} <!-- Content will be embedded here -->
+    </div>
+    <script>
+        // Store JWT in localStorage and handle redirects
+        document.body.addEventListener('htmx:afterOnLoad', function(event) {
+            const xhr = event.detail.xhr;
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    if (response.token) {
+                        localStorage.setItem('jwtToken', response.token);
+                    }
+                    if (event.target.id === 'login-form' && response.message === 'Logged in successfully') {
+                        window.location.href = '/dashboard/home';
+                    }
+                    if (event.target.id === 'register-form' && response.message === 'User registered successfully. Please verify your phone.') {
+                         // Display message and maybe redirect to OTP page or update UI
+                        const responseDiv = document.getElementById('response-message');
+                        if(responseDiv) {
+                            responseDiv.className = 'success-message';
+                            responseDiv.textContent = 'Registration successful! OTP for testing: ' + response.otp_for_testing + '. Redirecting to OTP page...';
+                        }
+                        setTimeout(() => { window.location.href = '/dashboard/auth/verify-otp'; }, 3000);
+                    }
+                     if (event.target.id === 'otp-form' && response.message === 'Phone verified successfully') {
+                        const responseDiv = document.getElementById('response-message');
+                        if(responseDiv) {
+                            responseDiv.className = 'success-message';
+                            responseDiv.textContent = 'OTP Verification successful! Redirecting to dashboard...';
+                        }
+                        setTimeout(() => { window.location.href = '/dashboard/home'; }, 2000);
+                    }
+                } catch (e) {
+                    // Not a JSON response or no token/specific message
+                }
+            } else {
+                 // Handle API error display
+                const responseDiv = document.getElementById('response-message');
+                if(responseDiv) {
+                    responseDiv.className = 'error-message';
+                    try {
+                         const errorResponse = JSON.parse(xhr.responseText);
+                         responseDiv.textContent = 'Error: ' + (errorResponse.error || 'An unknown error occurred.');
+                    } catch(e){
+                         responseDiv.textContent = 'Error: ' + (xhr.statusText || 'An unknown error occurred.');
+                    }
+                }
+            }
+        });
+
+        // Add JWT to HTMX requests
+        document.body.addEventListener('htmx:configRequest', function(event) {
+            const token = localStorage.getItem('jwtToken');
+            if (token) {
+                event.detail.headers['Authorization'] = 'Bearer ' + token;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{{define "content"}}
+<h2>Login</h2>
+<form id="login-form" hx-post="/api/v1/auth/login" hx-target="#response-message" hx-swap="innerHTML">
+    <div>
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+    </div>
+    <div>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required>
+    </div>
+    <button type="submit">Login</button>
+    <span class="htmx-indicator">Logging in...</span>
+</form>
+<div id="response-message"></div>
+<p>Don't have an account? <a href="/dashboard/auth/register">Register here</a></p>
+{{end}}

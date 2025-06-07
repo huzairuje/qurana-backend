@@ -1,0 +1,43 @@
+{{define "content"}}
+<h2>Dashboard Home</h2>
+<p>Welcome to your dashboard!</p>
+<div id="user-profile">
+    <p>Loading profile...</p>
+</div>
+<button hx-get="/api/v1/auth/me" hx-target="#user-profile" hx-swap="innerHTML"
+        hx-on::after-request=" if(event.detail.successful) this.style.display='none'; ">
+    View My Profile
+</button>
+<br><br>
+<button id="logout-button">Logout</button>
+
+<script>
+document.getElementById('logout-button').addEventListener('click', function() {
+    const token = localStorage.getItem('jwtToken');
+    if (token) {
+        fetch('/api/v1/auth/logout', { // Optional: Call logout API endpoint
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + token
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data.message); // "Logged out successfully..."
+        })
+        .catch(error => console.error('Logout API call failed:', error))
+        .finally(() => {
+            localStorage.removeItem('jwtToken');
+            window.location.href = '/dashboard/auth/login';
+        });
+    } else {
+        window.location.href = '/dashboard/auth/login';
+    }
+});
+
+// Simple check for token on page load for protected dashboard areas
+if (!localStorage.getItem('jwtToken')) {
+    // window.location.href = '/dashboard/auth/login'; // Redirect if no token
+}
+</script>
+{{end}}

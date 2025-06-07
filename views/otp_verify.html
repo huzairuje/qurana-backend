@@ -1,0 +1,14 @@
+{{define "content"}}
+<h2>Verify OTP</h2>
+<p>An OTP has been sent to your phone. Please enter it below.</p>
+<form id="otp-form" hx-post="/api/v1/auth/verify-otp" hx-target="#response-message" hx-swap="innerHTML">
+    <div>
+        <label for="otp">OTP:</label>
+        <input type="text" id="otp" name="otp" required>
+    </div>
+    <button type="submit">Verify OTP</button>
+    <span class="htmx-indicator">Verifying...</span>
+</form>
+<div id="response-message"></div>
+<p><a href="#" id="resend-otp-link" hx-post="/api/v1/auth/resend-otp" hx-target="#response-message" hx-swap="innerHTML">Resend OTP</a></p>
+{{end}}
